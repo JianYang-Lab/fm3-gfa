@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 pub mod echart;
 pub mod gml;
-// pub mod sugiyama;
+pub mod vcf;
 use anyhow::Result;
 
 // including bindings
