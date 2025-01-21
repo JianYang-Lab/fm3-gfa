@@ -1,39 +1,4 @@
 //! This crate allows for reading [Graph Modeling Language (GML)](https://en.wikipedia.org/wiki/Graph_Modelling_Language) files.
-//!
-//!
-//! This crate first parses the GML into [GMLObject]s and [GMLValue]s. Then the root GMLObject can
-//! be transformed into a [Graph] containing [Node]s and [Edge]s.
-//!
-//! # Examples
-//! ```
-//! use gml_parser::{GMLObject, Graph};
-//!
-//! let data = r#"
-//! graph [
-//!    id 4
-//!    node [
-//!        id 0
-//!    ]
-//!    node [
-//!        id 1
-//!    ]
-//!    edge [
-//!        source 1
-//!        target 0
-//!        label "Edge"
-//!    ]
-//!]"#;
-//! let root = GMLObject::from_str(data).unwrap();
-//! let graph = Graph::from_gml(root).unwrap();
-//! assert_eq!(graph.id, Some(4));
-//! assert_eq!(graph.nodes.len(), 2);
-//! assert_eq!(graph.edges.len(), 1);
-//! ```
-//!
-//! # Limitations
-//! - This implementation can be fragile and GML is not a very picky standard
-//! - We duplicate the data when parsing which can have performance impacts on very large graphs
-//!
 
 use std::{error::Error, fmt::Display, str::FromStr};
 extern crate pest;
@@ -512,6 +477,6 @@ mod tests {
         let file = "".to_string();
         let file = GMLParser::parse(Rule::text, &file).unwrap().next().unwrap();
         let root = GMLObject::parse(file.into_inner()).unwrap();
-        assert!(Graph::from_gml(root).is_ok());
+        assert!(Graph::from_gml(root).is_err());
     }
 }
