@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anyhow::Result;
 use nom::{
     branch::alt,
@@ -17,6 +15,7 @@ use noodles::vcf::{
     Header,
 };
 use regex::Regex;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct BubbleVariant {
