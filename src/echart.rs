@@ -1,4 +1,4 @@
-use crate::gml::Graph;
+use crate::gml::GMLGraph;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::io;
@@ -26,36 +26,7 @@ struct Link {
 }
 
 impl EchartGraph {
-    // // 添加从布局图转换的新方法
-    // pub fn from_layout_graph(graph: &PetGraph<NodeAttributes, EdgeAttributes, Undirected>) -> Self {
-    //     let mut nodes = Vec::new();
-    //     let mut links = Vec::new();
-
-    //     // 转换节点
-    //     for node_idx in graph.node_indices() {
-    //         let node_attrs = &graph[node_idx];
-    //         nodes.push(Node {
-    //             id: node_idx.index() as i64, // 使用节点索引作为ID
-    //             x: node_attrs.position.x,
-    //             y: node_attrs.position.y,
-    //             name: node_idx.index().to_string(),
-    //         });
-    //     }
-
-    //     // 转换边
-    //     for edge_ref in graph.edge_references() {
-    //         links.push(Link {
-    //             source: edge_ref.source().index() as i64,
-    //             target: edge_ref.target().index() as i64,
-    //         });
-    //     }
-
-    //     EchartGraph { nodes, links }
-    // }
-    pub fn from_gml(layout_graph: Graph) -> Result<Self> {
-        // let layout_gml = GMLObject::from_str(layout_result)?;
-        // let layout_graph = Graph::from_gml(layout_gml)?;
-
+    pub fn from_gml(layout_graph: GMLGraph) -> Result<Self> {
         let mut nodes = Vec::new();
         let mut links = Vec::new();
 
