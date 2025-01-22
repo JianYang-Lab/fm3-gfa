@@ -146,7 +146,7 @@ pub enum GMLValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct Graph {
+pub struct GMLGraph {
     pub directed: Option<bool>,
     pub id: Option<i64>,
     pub label: Option<String>,
@@ -168,13 +168,13 @@ pub struct Edge {
     pub attrs: Vec<(String, GMLValue)>,
 }
 
-impl Default for Graph {
+impl Default for GMLGraph {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Graph {
+impl GMLGraph {
     pub fn new() -> Self {
         Self {
             directed: None,
@@ -247,7 +247,7 @@ impl Graph {
             };
             edges.push(Edge::from_gml(*edge)?);
         }
-        Ok(Graph {
+        Ok(GMLGraph {
             directed,
             id,
             label,
@@ -432,7 +432,7 @@ impl<'a> ReadableGMLAttributes<'a> for Edge {
         int_get_attribute(attrs, name)
     }
 }
-impl<'a> ReadableGMLAttributes<'a> for Graph {
+impl<'a> ReadableGMLAttributes<'a> for GMLGraph {
     fn take_attribute(&mut self, name: &str) -> Option<(String, GMLValue)> {
         let attrs = self.attributes_mut();
         int_take_attribute(attrs, name)
@@ -459,7 +459,7 @@ impl HasGMLAttributes for Edge {
         &mut self.attrs
     }
 }
-impl HasGMLAttributes for Graph {
+impl HasGMLAttributes for GMLGraph {
     fn attributes(&self) -> &Vec<(String, GMLValue)> {
         &self.attrs
     }
@@ -477,6 +477,6 @@ mod tests {
         let file = "".to_string();
         let file = GMLParser::parse(Rule::text, &file).unwrap().next().unwrap();
         let root = GMLObject::parse(file.into_inner()).unwrap();
-        assert!(Graph::from_gml(root).is_err());
+        assert!(GMLGraph::from_gml(root).is_err());
     }
 }
