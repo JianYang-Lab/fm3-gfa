@@ -117,30 +117,25 @@ impl BubbleVariant {
     }
 
     // get ref nodes from allele traversal
-    pub fn get_ref_nodes(&self) -> Vec<node> {
+    pub fn get_ref_nodes(&self, tail: bool) -> Vec<node> {
         // first AT is ref nodes
-        // strip first node and last node
-        self.allele_traversal[0].nodes[1..self.allele_traversal[0].nodes.len() - 1].to_vec()
+        // strip first node and last node if long is false
+        if tail {
+            self.allele_traversal[0].nodes.to_vec()
+        } else {
+            self.allele_traversal[0].nodes[1..self.allele_traversal[0].nodes.len() - 1].to_vec()
+        }
     }
 
     // get alt nodes from allele traversal
-    pub fn get_alt_nodes(&self) -> Vec<node> {
+    pub fn get_alt_nodes(&self, tail: bool) -> Vec<node> {
         // skip first AT
         // strip first node and last node
-        self.allele_traversal[1].nodes[1..self.allele_traversal[1].nodes.len() - 1].to_vec()
-    }
-
-    // get all nodes from allele traversal and unique
-    pub fn get_all_nodes(&self) -> Vec<node> {
-        let mut nodes = Vec::new();
-        for traversal in &self.allele_traversal {
-            for node in &traversal.nodes {
-                nodes.push(node.clone());
-            }
+        if tail {
+            self.allele_traversal[1].nodes.to_vec()
+        } else {
+            self.allele_traversal[1].nodes[1..self.allele_traversal[1].nodes.len() - 1].to_vec()
         }
-        nodes.sort();
-        nodes.dedup();
-        nodes
     }
 }
 
