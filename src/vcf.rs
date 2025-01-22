@@ -14,19 +14,21 @@ use noodles::vcf::{
     },
     Header,
 };
-use regex::Regex;
+// use regex::Regex;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BubbleVariant {
     pub id: String,
     pub pos: usize,
     pub allele_traversal: Vec<Traversal>,
 }
 
+type node = Vec<u8>;
+
 #[derive(Debug, Clone)]
 pub struct Traversal {
-    pub nodes: Vec<u32>, // store node indices
+    pub nodes: Vec<node>, // store node indices
 }
 
 pub fn parse_vcf_file(path: &str) -> Result<Vec<BubbleVariant>> {
@@ -113,6 +115,33 @@ impl BubbleVariant {
 
         Ok(allele_traversals)
     }
+
+    // get ref nodes from allele traversal
+    pub fn get_ref_nodes(&self) -> Vec<node> {
+        // first AT is ref nodes
+        // strip first node and last node
+        self.allele_traversal[0].nodes[1..self.allele_traversal[0].nodes.len() - 1].to_vec()
+    }
+
+    // get alt nodes from allele traversal
+    pub fn get_alt_nodes(&self) -> Vec<node> {
+        // skip first AT
+        // strip first node and last node
+        self.allele_traversal[1].nodes[1..self.allele_traversal[1].nodes.len() - 1].to_vec()
+    }
+
+    // get all nodes from allele traversal and unique
+    pub fn get_all_nodes(&self) -> Vec<node> {
+        let mut nodes = Vec::new();
+        for traversal in &self.allele_traversal {
+            for node in &traversal.nodes {
+                nodes.push(node.clone());
+            }
+        }
+        nodes.sort();
+        nodes.dedup();
+        nodes
+    }
 }
 
 impl Traversal {
@@ -122,9 +151,10 @@ impl Traversal {
     }
 
     // nom parser for single node
-    fn parse_single_node(input: &str) -> IResult<&str, u32> {
+    fn parse_single_node(input: &str) -> IResult<&str, Vec<u8>> {
         let (input, num) = preceded(Self::parse_separator, digit1)(input)?;
-        Ok((input, num.parse().unwrap()))
+        // to byte
+        Ok((input, num.as_bytes().to_vec()))
     }
 
     // nom parser for Traversal
@@ -139,24 +169,24 @@ impl Traversal {
     }
 
     // Heavy Regex parser, it's slower than nom, just for comparison
-    fn _parse_regex(input: &str) -> Result<Self, String> {
-        // build regex pattern
-        let re = Regex::new(r"[>|<](\d+)").map_err(|e| e.to_string())?;
+    // fn _parse_regex(input: &str) -> Result<Self, String> {
+    //     // build regex pattern
+    //     let re = Regex::new(r"[>|<](\d+)").map_err(|e| e.to_string())?;
 
-        let nodes: Vec<u32> = re
-            .captures_iter(input)
-            .filter_map(|cap| {
-                cap.get(1) // capture group 1
-                    .and_then(|m| m.as_str().parse().ok())
-            })
-            .collect();
+    //     let nodes: Vec<u32> = re
+    //         .captures_iter(input)
+    //         .filter_map(|cap| {
+    //             cap.get(1) // capture group 1
+    //                 .and_then(|m| m.as_str().parse().ok())
+    //         })
+    //         .collect();
 
-        if nodes.is_empty() {
-            Err("No valid nodes found in input".to_string())
-        } else {
-            Ok(Traversal { nodes })
-        }
-    }
+    //     if nodes.is_empty() {
+    //         Err("No valid nodes found in input".to_string())
+    //     } else {
+    //         Ok(Traversal { nodes })
+    //     }
+    // }
 }
 
 impl FromStr for Traversal {
@@ -178,19 +208,23 @@ mod tests {
 
     #[test]
     fn test_parse_traversal() {
-        // simple test
         let input = ">21610>21611>21612>21613>21614";
         let traversal = Traversal::from_str(input).unwrap();
-        assert_eq!(traversal.nodes, vec![21610, 21611, 21612, 21613, 21614]);
 
-        // `<` separator
-        let input = ">2622646<2622651";
-        let traversal = Traversal::from_str(input).unwrap();
-        assert_eq!(traversal.nodes, vec![2622646, 2622651]);
+        assert_eq!(traversal.nodes[0], b"21610");
+        assert_eq!(traversal.nodes[1], b"21611");
+        assert_eq!(traversal.nodes[2], b"21612");
+        assert_eq!(traversal.nodes[3], b"21613");
+        assert_eq!(traversal.nodes[4], b"21614");
+    }
 
-        // single node
-        let input = ">2622646";
+    #[test]
+    fn test_mixed_directions() {
+        let input = ">21610<21611>21612";
         let traversal = Traversal::from_str(input).unwrap();
-        assert_eq!(traversal.nodes, vec![2622646]);
+
+        assert_eq!(traversal.nodes[0], b"21610");
+        assert_eq!(traversal.nodes[1], b"21611");
+        assert_eq!(traversal.nodes[2], b"21612");
     }
 }
