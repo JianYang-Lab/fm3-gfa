@@ -324,6 +324,20 @@ impl Node {
                 });
         (x, y)
     }
+
+    pub fn get_sequence(&self) -> String {
+        match self.get_attribute("sequence") {
+            Some((_, GMLValue::GMLString(seq))) => seq.to_string(),
+            _ => "".to_string(),
+        }
+    }
+
+    pub fn get_status(&self) -> String {
+        match self.get_attribute("status") {
+            Some((_, GMLValue::GMLString(status))) => status.to_string(),
+            _ => "".to_string(),
+        }
+    }
 }
 impl Edge {
     fn from_gml(mut obj: GMLObject) -> Result<Self, GMLError> {

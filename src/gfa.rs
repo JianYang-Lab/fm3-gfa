@@ -14,12 +14,15 @@ use std::collections::{HashMap, HashSet};
 pub struct NodeData {
     pub id: Vec<u8>,
     pub sequence: String,
+    // REF or ALT
+    pub status: String,
 }
 impl NodeData {
     fn default() -> NodeData {
         NodeData {
             id: Vec::new(),
             sequence: String::new(),
+            status: String::new(),
         }
     }
 }
@@ -43,11 +46,12 @@ impl Default for GFAGraph {
 
 impl GFAGraph {
     // add node in graph
-    pub fn add_node(&mut self, id: Vec<u8>, sequence: String) -> Result<NodeIndex> {
+    pub fn add_node(&mut self, id: Vec<u8>, sequence: String, status: String) -> Result<NodeIndex> {
         let node_idx = self.inner_graph.add_node(id.clone());
         let node_data = NodeData {
             id: id.clone(),
             sequence,
+            status,
         };
 
         while self.node_attrs.len() <= node_idx.index() {
@@ -77,7 +81,6 @@ impl GFAGraph {
     }
 
     /// Convert the graph to GML format string
-    /// Convert the graph to GML format string
     pub fn to_gml_string(&self) -> String {
         let mut result = String::new();
         result.push_str("graph [\n");
@@ -87,12 +90,12 @@ impl GFAGraph {
             if let Some(node_data) = self.get_node_data(node_idx) {
                 result.push_str("\tnode [\n");
                 result.push_str(&format!("\t\tid {}\n", node_idx.index()));
-                // result.push_str(&format!(
-                //     "\t\tlabel \"{}\"\n",
-                //     String::from_utf8_lossy(&node_data.id)
-                // ));
+                result.push_str(&format!(
+                    "\t\tlabel \"{}\"\n",
+                    String::from_utf8_lossy(&node_data.id)
+                ));
                 result.push_str(&format!("\t\tsequence \"{}\"\n", node_data.sequence));
-                // result.push_str(&format!("\t\tlength {}\n", node_data.sequence.len()));
+                result.push_str(&format!("\t\tstatus \"{}\"\n", node_data.status));
                 result.push_str("\t]\n");
             }
         }
@@ -235,6 +238,8 @@ pub fn gfa_to_graph(path: &str) -> Result<GFAGraph> {
         gfa_graph.node_attrs[node_idx.index()] = NodeData {
             id: node_id,
             sequence: segment.sequence.display(),
+            // unnecessary for whole graph
+            status: String::new(),
         };
     }
 
