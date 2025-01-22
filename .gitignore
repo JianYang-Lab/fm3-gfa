@@ -1,3 +1,5 @@
 /target
 /vis/test.json
 /tests/test.vcf.gz*
+/tests/test.gfa
+/tests
