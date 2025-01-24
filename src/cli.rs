@@ -38,7 +38,7 @@ pub enum Commands {
         #[arg(short, long, required = true)]
         vcf: String,
         /// Port number
-        #[arg(short, long, default_value = "8080")]
+        #[arg(short, long, default_value = "8888")]
         port: u16,
     },
 }

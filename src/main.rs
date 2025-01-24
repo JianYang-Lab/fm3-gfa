@@ -11,7 +11,6 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Generate { gfa, vcf, threads } => generate(&gfa, &vcf, threads)?,
         Commands::Serve { gfa, vcf, port } => {
-            // serve(&gfa, &vcf, port)?;
             tokio::runtime::Runtime::new()?.block_on(serve(&gfa, &vcf, port))?
         }
     }
