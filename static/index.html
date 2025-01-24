@@ -80,6 +80,63 @@
                 font-size: 16px;
                 color: #333;
             }
+            .controls {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+
+            .control-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .slider-label {
+                font-size: 14px;
+                color: #333;
+                min-width: 120px;
+            }
+
+            .slider {
+                width: 150px;
+                height: 5px;
+                -webkit-appearance: none;
+                background: #ddd;
+                border-radius: 5px;
+                outline: none;
+            }
+
+            .slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 15px;
+                height: 15px;
+                background: #3e54ac;
+                border-radius: 50%;
+                cursor: pointer;
+            }
+
+            .slider::-moz-range-thumb {
+                width: 15px;
+                height: 15px;
+                background: #3e54ac;
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+            }
+
+            .value-display {
+                min-width: 40px;
+                text-align: right;
+                font-size: 14px;
+                color: #666;
+            }
         </style>
     </head>
     <body>
@@ -97,12 +154,99 @@
                 <div class="loading-spinner"></div>
                 <span class="loading-text">Loading graph...</span>
             </div>
+            <div class="controls">
+                <div class="control-group">
+                    <span class="slider-label">Node Size:</span>
+                    <input
+                        type="range"
+                        id="nodeSize"
+                        class="slider"
+                        min="1"
+                        max="20"
+                        value="5"
+                        step="1"
+                    />
+                    <span id="nodeSizeValue" class="value-display">5</span>
+                </div>
+            </div>
         </div>
 
         <script>
             const chart = echarts.init(document.getElementById("chart"));
             const select = document.getElementById("variantSelect");
             const loading = document.getElementById("loading");
+            const nodeSize = document.getElementById("nodeSize");
+            const nodeSizeValue = document.getElementById("nodeSizeValue");
+
+            let currentOption = null;
+
+            function updateChart(data) {
+                currentOption = {
+                    title: {
+                        text: `Variant: ${select.value}`,
+                    },
+                    tooltip: {
+                        formatter: function (params) {
+                            if (params.dataType === "node") {
+                                return `ID: ${params.data.name}<br/>
+                                            Seq: ${params.data.value.Sequence}<br/>
+                                            Status: ${params.data.value.Status}<br/>`;
+                            }
+                            return "";
+                        },
+                    },
+                    legend: {
+                        data: categories.map((c) => c.name),
+                        show: true,
+                    },
+                    animationDurationUpdate: 1500,
+                    animationEasingUpdate: "quinticInOut",
+                    series: [
+                        {
+                            symbol: "circle",
+                            type: "graph",
+                            layout: "none",
+                            data: data.nodes.map((node) => ({
+                                ...node,
+                                category: categories.findIndex(
+                                    (cat) => cat.name === node.value.Status,
+                                ),
+                            })),
+                            categories: categories,
+                            links: data.links.map((link) => ({
+                                source: link.source.toString(),
+                                target: link.target.toString(),
+                            })),
+                            roam: true,
+                            draggable: true,
+                            label: {
+                                show: false,
+                            },
+                            symbolSize: [
+                                Number(nodeSize.value),
+                                Number(nodeSize.value),
+                            ],
+                            lineStyle: {
+                                color: "#9DA2DE",
+                                width: 1,
+                                curveness: 0.1,
+                            },
+                            emphasis: {
+                                focus: "adjacency",
+                                lineStyle: {
+                                    width: 3,
+                                },
+                            },
+                            scaleLimit: {
+                                min: 0.1,
+                                max: 10,
+                            },
+                        },
+                    ],
+                };
+
+                chart.setOption(currentOption);
+            }
 
             const categories = [
                 {
@@ -156,68 +300,7 @@
                 fetch(`/api/layout/${variantId}`)
                     .then((response) => response.json())
                     .then((data) => {
-                        const option = {
-                            title: {
-                                text: `Variant: ${variantId}`,
-                            },
-                            tooltip: {
-                                formatter: function (params) {
-                                    if (params.dataType === "node") {
-                                        return `ID: ${params.data.name}<br/>
-                                          Seq: ${params.data.value.Sequence}<br/>
-                                          Status: ${params.data.value.Status}<br/>`;
-                                    }
-                                    return "";
-                                },
-                            },
-                            legend: {
-                                data: categories.map((c) => c.name),
-                                show: true,
-                            },
-                            animationDurationUpdate: 1500,
-                            animationEasingUpdate: "quinticInOut",
-                            series: [
-                                {
-                                    symbol: "circle",
-                                    type: "graph",
-                                    layout: "none",
-                                    data: data.nodes.map((node) => ({
-                                        ...node,
-                                        category: categories.findIndex(
-                                            (cat) =>
-                                                cat.name === node.value.Status,
-                                        ),
-                                    })),
-                                    categories: categories,
-                                    links: data.links.map((link) => ({
-                                        source: link.source.toString(),
-                                        target: link.target.toString(),
-                                    })),
-                                    roam: true,
-                                    draggable: true,
-                                    label: {
-                                        show: false,
-                                    },
-                                    symbolSize: [5, 5],
-                                    lineStyle: {
-                                        color: "#9DA2DE",
-                                        width: 1,
-                                        curveness: 0.1,
-                                    },
-                                    emphasis: {
-                                        focus: "adjacency",
-                                        lineStyle: {
-                                            width: 3,
-                                        },
-                                    },
-                                    scaleLimit: {
-                                        min: 0.1,
-                                        max: 10,
-                                    },
-                                },
-                            ],
-                        };
-                        chart.setOption(option);
+                        updateChart(data); // 使用 updateChart 函数，而不是重新定义 option
                     })
                     .catch((error) => {
                         console.error("Error loading layout:", error);
@@ -226,6 +309,18 @@
                     .finally(() => {
                         hideLoading();
                     });
+            });
+
+            // watch node size change
+            nodeSize.addEventListener("input", (e) => {
+                nodeSizeValue.textContent = e.target.value;
+                if (currentOption) {
+                    currentOption.series[0].symbolSize = [
+                        Number(e.target.value),
+                        Number(e.target.value),
+                    ];
+                    chart.setOption(currentOption);
+                }
             });
 
             // resize chart on window resize
