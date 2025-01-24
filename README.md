@@ -8,6 +8,9 @@ Enter a GFA file, then specify a drunk😵‍💫 variant, it will locate it and
 
 This is very practical and efficient for displaying variation or website presentation.
 
+### DEMO
+![demo](./demo.jpeg)
+
 ### Installation
 
 ```bash
