@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{command, Parser};
+use clap::{command, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(name = "fm3-gfa")]
@@ -11,22 +11,36 @@ use clap::{command, Parser};
     \n\n{usage-heading} {usage}\n\n{all-args}"
 )]
 pub struct Cli {
-    /// Input GFA file
-    #[arg(short, long, required = true, help_heading = Some("I/O"))]
-    pub gfa: String,
-    /// Input VCF file, gzipped is supported
-    #[arg(short, long, required = true, help_heading = Some("I/O"))]
-    pub vcf: String,
-    /// Output json file, None for stdout
-    #[arg(short, long, required = false, help_heading = Some("I/O"))]
-    pub output: Option<String>,
+    #[command(subcommand)]
+    pub command: Commands,
+}
 
-    /// Threads
-    #[arg(default_value = "1", short = '@', long, help_heading = Some("Options"))]
-    pub threads: usize,
-    /// Reference Name, if `W` is available in GFA[WIP]
-    #[arg(short, long, help_heading = Some("Options"))]
-    pub ref_name: Option<String>,
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// Generate all JSONs into a tsv file with Variant ID, stdout
+    Generate {
+        /// Input GFA file
+        #[arg(short, long, required = true, help_heading = Some("I/O"))]
+        gfa: String,
+        /// Input VCF file
+        #[arg(short, long, required = true, help_heading = Some("I/O"))]
+        vcf: String,
+        /// Threads
+        #[arg(default_value = "1", short = '@', long)]
+        threads: usize,
+    },
+    /// Start a simple web server for querying and visualization
+    Serve {
+        /// Input GFA file
+        #[arg(short, long, required = true)]
+        gfa: String,
+        /// Input VCF file
+        #[arg(short, long, required = true)]
+        vcf: String,
+        /// Port number
+        #[arg(short, long, default_value = "8080")]
+        port: u16,
+    },
 }
 
 pub fn parse_cli() -> Result<Cli> {

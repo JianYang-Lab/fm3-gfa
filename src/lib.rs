@@ -4,7 +4,9 @@
 pub mod bfs;
 pub mod cli;
 pub mod echart;
+pub mod generate;
 pub mod gfa;
 pub mod gml;
 pub mod layout;
+pub mod serve;
 pub mod vcf;
