@@ -9,14 +9,23 @@
         <script>
             var myChart = echarts.init(document.getElementById("main"));
 
-            fetch("test.json")
+            fetch("test2.json")
                 .then((response) => response.json())
                 .then((data) => {
-                    // const categories = [
-                    //     ...new Set(data.nodes.map((node) => node.category)),
-                    // ].map((category) => ({
-                    //     name: category,
-                    // }));
+                    const categories = [
+                        {
+                            name: "REF",
+                            itemStyle: {
+                                color: "#3E54AC",
+                            },
+                        },
+                        {
+                            name: "ALT",
+                            itemStyle: {
+                                color: "#B01E68",
+                            },
+                        },
+                    ];
 
                     var option = {
                         title: {
@@ -25,18 +34,18 @@
                         tooltip: {
                             formatter: function (params) {
                                 if (params.dataType === "node") {
-                                    let annotations =
-                                        params.data.value.Annotation || [];
-                                    return `ID: ${params.data.id}<br/>
-
-                                             `;
+                                    return `ID: ${params.data.name}<br/>
+                                            Seq: ${params.data.value.Sequence}<br/>
+                                            Status: ${params.data.value.Status}<br/>
+                                    `;
                                 }
                                 return "";
                             },
                         },
-                        // legend: {
-                        //     data: categories.map((c) => c.name),
-                        // },
+                        legend: {
+                            data: categories.map((c) => c.name),
+                            show: true,
+                        },
                         animationDurationUpdate: 1500,
                         animationEasingUpdate: "quinticInOut",
                         series: [
@@ -45,7 +54,13 @@
                                 symbol: "circle",
                                 type: "graph",
                                 layout: "none",
-                                data: data.nodes,
+                                data: data.nodes.map((node) => ({
+                                    ...node,
+                                    category: categories.findIndex(
+                                        (cat) => cat.name === node.value.Status,
+                                    ),
+                                })),
+                                categories: categories,
                                 links: data.links.map((link) => ({
                                     source: link.source.toString(),
                                     target: link.target.toString(),
@@ -58,7 +73,7 @@
                                 },
                                 symbolSize: [5, 5],
                                 lineStyle: {
-                                    color: "source",
+                                    color: "#9DA2DE",
                                     width: 1,
                                     curveness: 0.1,
                                 },
