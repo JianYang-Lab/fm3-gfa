@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Network Graph</title>
+        <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            .container {
+                display: flex;
+                height: 100vh;
+            }
+
+            .sidebar {
+                width: 250px;
+                padding: 20px;
+                border-right: 1px solid #ccc;
+                background: #f5f5f5;
+            }
+
+            .variant-list {
+                width: 100%;
+                height: calc(100vh - 100px);
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 8px;
+            }
+
+            .chart {
+                flex-grow: 1;
+                height: 100vh;
+            }
+
+            h3 {
+                margin-bottom: 16px;
+                color: #333;
+            }
+
+            .loading {
+                position: absolute;
+                top: 50%;
+                left: 60%; /* 考虑到侧边栏的宽度 */
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.9);
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                display: none;
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 30px;
+                height: 30px;
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-right: 10px;
+                vertical-align: middle;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .loading-text {
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 16px;
+                color: #333;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="sidebar">
+                <h3>Variants</h3>
+                <select
+                    id="variantSelect"
+                    class="variant-list"
+                    size="30"
+                ></select>
+            </div>
+            <div id="chart" class="chart"></div>
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <span class="loading-text">Loading graph...</span>
+            </div>
+        </div>
+
+        <script>
+            const chart = echarts.init(document.getElementById("chart"));
+            const select = document.getElementById("variantSelect");
+            const loading = document.getElementById("loading");
+
+            const categories = [
+                {
+                    name: "REF",
+                    itemStyle: {
+                        color: "#3E54AC",
+                    },
+                },
+                {
+                    name: "ALT",
+                    itemStyle: {
+                        color: "#B01E68",
+                    },
+                },
+            ];
+
+            // show and hide loading spinner
+            function showLoading() {
+                loading.style.display = "block";
+                chart.showLoading({
+                    text: "Loading...",
+                    color: "#3498db",
+                    textColor: "#333",
+                    maskColor: "rgba(255, 255, 255, 0.3)",
+                    zlevel: 0,
+                });
+            }
+
+            function hideLoading() {
+                loading.style.display = "none";
+                chart.hideLoading();
+            }
+
+            // fetch all variants
+            fetch("/api/variants")
+                .then((response) => response.json())
+                .then((variants) => {
+                    variants.forEach((variant) => {
+                        const option = document.createElement("option");
+                        option.value = variant;
+                        option.text = variant;
+                        select.appendChild(option);
+                    });
+                });
+
+            // watch select change
+            select.addEventListener("change", (e) => {
+                const variantId = e.target.value;
+                showLoading();
+
+                fetch(`/api/layout/${variantId}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const option = {
+                            title: {
+                                text: `Variant: ${variantId}`,
+                            },
+                            tooltip: {
+                                formatter: function (params) {
+                                    if (params.dataType === "node") {
+                                        return `ID: ${params.data.name}<br/>
+                                          Seq: ${params.data.value.Sequence}<br/>
+                                          Status: ${params.data.value.Status}<br/>`;
+                                    }
+                                    return "";
+                                },
+                            },
+                            legend: {
+                                data: categories.map((c) => c.name),
+                                show: true,
+                            },
+                            animationDurationUpdate: 1500,
+                            animationEasingUpdate: "quinticInOut",
+                            series: [
+                                {
+                                    symbol: "circle",
+                                    type: "graph",
+                                    layout: "none",
+                                    data: data.nodes.map((node) => ({
+                                        ...node,
+                                        category: categories.findIndex(
+                                            (cat) =>
+                                                cat.name === node.value.Status,
+                                        ),
+                                    })),
+                                    categories: categories,
+                                    links: data.links.map((link) => ({
+                                        source: link.source.toString(),
+                                        target: link.target.toString(),
+                                    })),
+                                    roam: true,
+                                    draggable: true,
+                                    label: {
+                                        show: false,
+                                    },
+                                    symbolSize: [5, 5],
+                                    lineStyle: {
+                                        color: "#9DA2DE",
+                                        width: 1,
+                                        curveness: 0.1,
+                                    },
+                                    emphasis: {
+                                        focus: "adjacency",
+                                        lineStyle: {
+                                            width: 3,
+                                        },
+                                    },
+                                    scaleLimit: {
+                                        min: 0.1,
+                                        max: 10,
+                                    },
+                                },
+                            ],
+                        };
+                        chart.setOption(option);
+                    })
+                    .catch((error) => {
+                        console.error("Error loading layout:", error);
+                        alert("Failed to load graph. Please try again.");
+                    })
+                    .finally(() => {
+                        hideLoading();
+                    });
+            });
+
+            // resize chart on window resize
+            window.addEventListener("resize", () => chart.resize());
+        </script>
+    </body>
+</html>
