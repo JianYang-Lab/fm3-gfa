@@ -55,8 +55,8 @@
 #include "../basic/Hashing.h"
 #include "../basic/String.h"
 #include "../basic/GraphAttributes.h"
-#include "../cluster/ClusterGraph.h"
-#include "../cluster/ClusterGraphAttributes.h"
+// #include "../cluster/ClusterGraph.h"
+// #include "../cluster/ClusterGraphAttributes.h"
 
 
 namespace ogdf {
@@ -168,42 +168,42 @@ public:
 	//creates clustergraph from GML parse tree
 	//bool read(Graph &G, ClusterGraph & CG);
 	//read only cluster part of object tree and create cluster graph structure
-	bool readCluster(Graph &G, ClusterGraph& CG);
+	// bool readCluster(Graph &G, ClusterGraph& CG);
 	//the same with attributes
-	bool readAttributedCluster(
-		Graph &G,
-		ClusterGraph& CG,
-		ClusterGraphAttributes& ACG);
+	// bool readAttributedCluster(
+	// 	Graph &G,
+	// 	ClusterGraph& CG,
+	// 	ClusterGraphAttributes& ACG);
 
 protected:
 
 	//read all cluster tree information
-	bool clusterRead(
-		GmlObject* rootCluster,
-		ClusterGraph& CG);
+	// bool clusterRead(
+	// 	GmlObject* rootCluster,
+	// 	ClusterGraph& CG);
 
-	//with attributes
-	bool attributedClusterRead(
-		GmlObject* rootCluster,
-		ClusterGraph& CG,
-		ClusterGraphAttributes& ACG);
+	// //with attributes
+	// bool attributedClusterRead(
+	// 	GmlObject* rootCluster,
+	// 	ClusterGraph& CG,
+	// 	ClusterGraphAttributes& ACG);
 
-	//recursively read cluster subtree information
-	bool recursiveClusterRead(
-		GmlObject* clusterObject,
-	 	ClusterGraph& CG,
-		cluster c);
+	// //recursively read cluster subtree information
+	// bool recursiveClusterRead(
+	// 	GmlObject* clusterObject,
+	//  	ClusterGraph& CG,
+	// 	cluster c);
 
-	bool recursiveAttributedClusterRead(
-		GmlObject* clusterObject,
-		ClusterGraph& CG,
-		ClusterGraphAttributes& ACG,
-		cluster c);
+	// bool recursiveAttributedClusterRead(
+	// 	GmlObject* clusterObject,
+	// 	ClusterGraph& CG,
+	// 	ClusterGraphAttributes& ACG,
+	// 	cluster c);
 
-	bool readClusterAttributes(
-		GmlObject* cGraphics,
-		cluster c,
-		ClusterGraphAttributes& ACG);
+	// bool readClusterAttributes(
+	// 	GmlObject* cGraphics,
+	// 	cluster c,
+	// 	ClusterGraphAttributes& ACG);
 
 private:
 	void doInit(istream &is, bool doCheck);

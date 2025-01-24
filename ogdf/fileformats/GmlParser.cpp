@@ -846,399 +846,399 @@ bool GmlParser::read(Graph &G, GraphAttributes &AG)
 }//read
 
 
-//to be called AFTER calling read(G, AG)
-bool GmlParser::readAttributedCluster(
-    Graph &/*G*/,
-	ClusterGraph& CG,
-	ClusterGraphAttributes& ACG)
-{
-//	OGDF_ASSERT(&CG.getGraph() == &G)
-
-
-	//now we need the cluster object
-	GmlObject *rootObject = m_objectTree;
-	for(; rootObject; rootObject = rootObject->m_pBrother)
-		if (id(rootObject) == rootClusterPredefKey) break;
-
-	if(rootObject == 0)
-		return true;
-
-	if (id(rootObject) != rootClusterPredefKey)
-	{
-		setError("missing rootcluster key");
-		return false;
-	}
-
-	if (rootObject->m_valueType != gmlListBegin) return false;
-
-	attributedClusterRead(rootObject, CG, ACG);
-
-	return true;
-}//readAttributedCluster
-
-
-//the clustergraph has to be initialized on G!!,
-//no clusters other then root cluster may exist, which holds all nodes
-bool GmlParser::readCluster(Graph &/*G*/, ClusterGraph& CG)
-{
-//	OGDF_ASSERT(&CG.getGraph() == &G)
-
-	//now we need the cluster object
-	GmlObject *rootObject = m_objectTree;
-	for(; rootObject; rootObject = rootObject->m_pBrother)
-		if (id(rootObject) == rootClusterPredefKey) break;
-
-	//we have to check if the file does really contain clusters
-	//otherwise, rootcluster will suffice
-	if (rootObject == 0) return true;
-	if (id(rootObject) != rootClusterPredefKey)
-	{
-		setError("missing rootcluster key");
-		return false;
-	}
-
-	if (rootObject->m_valueType != gmlListBegin) return false;
-
-	clusterRead(rootObject, CG);
-
-	return true;
-}//read clustergraph
-
-
-//read all cluster tree information
-bool GmlParser::clusterRead(
-	GmlObject* rootCluster,
-	ClusterGraph& CG)
-{
-
-	//the root cluster is only allowed to hold child clusters and
-	//nodes in a list
-
-	if (rootCluster->m_valueType != gmlListBegin) return false;
-
-	// read all clusters and nodes
-	GmlObject *rootClusterSon = rootCluster->m_pFirstSon;
-
-	for(; rootClusterSon; rootClusterSon = rootClusterSon->m_pBrother)
-	{
-		switch(id(rootClusterSon))
-		{
-		case clusterPredefKey:
-			{
-				//we could delete this, but we aviod the call
-				if (rootClusterSon->m_valueType != gmlListBegin) return false;
-				// set attributes to default values
-				//we currently do not set any values
-				cluster c = CG.newCluster(CG.rootCluster());
-
-				//recursively read cluster
-				recursiveClusterRead(rootClusterSon, CG, c);
-
-			} //case cluster
-			break;
-		case vertexPredefKey: //direct root vertices
-			{
-				if (rootClusterSon->m_valueType != gmlStringValue) return false;
-				String vIDString = rootClusterSon->m_stringValue;
-
-				//we only allow a vertex id as string identification
-				if ((vIDString[0] != 'v') &&
-					(!isdigit(vIDString[0])))return false; //do not allow labels
-				//if old style entry "v"i
-				if (!isdigit(vIDString[0])) //should check prefix?
-					vIDString[0] = '0'; //leading zero to allow conversion
-				int vID = atoi(vIDString.cstr());
-
-				OGDF_ASSERT(m_mapToNode[vID] != 0)
-
-					//we assume that no node is already assigned ! Changed:
-					//all new nodes are assigned to root
-					//CG.reassignNode(mapToNode[vID], CG.rootCluster());
-					//it seems that this may be unnessecary, TODO check
-					CG.reassignNode(m_mapToNode[vID], CG.rootCluster());
-				//char* vIDChar = new char[vIDString.length()+1];
-				//for (int ind = 1; ind < vIDString.length(); ind++)
-				//	vIDChar
-
-			}//case vertex
-		}//switch
-	}//for all rootcluster sons
-
-	return true;
-
-}//clusterread
-
-
-//the same for attributed graphs
-//read all cluster tree information
-//make changes to this as well as the recursive function
-bool GmlParser::attributedClusterRead(
-	GmlObject* rootCluster,
-	ClusterGraph& CG,
-	ClusterGraphAttributes& ACG)
-{
-
-	//the root cluster is only allowed to hold child clusters and
-	//nodes in a list
-
-	if (rootCluster->m_valueType != gmlListBegin) return false;
-
-	// read all clusters and nodes
-	GmlObject *rootClusterSon = rootCluster->m_pFirstSon;
-
-	for(; rootClusterSon; rootClusterSon = rootClusterSon->m_pBrother)
-	{
-		switch(id(rootClusterSon))
-		{
-		case clusterPredefKey:
-			{
-				//we could delete this, but we avoid the call
-				if (rootClusterSon->m_valueType != gmlListBegin) return false;
-				// set attributes to default values
-				//we currently do not set any values
-				cluster c = CG.newCluster(CG.rootCluster());
-
-				//recursively read cluster
-				recursiveAttributedClusterRead(rootClusterSon, CG, ACG, c);
-
-			} //case cluster
-			break;
-
-		case vertexPredefKey: //direct root vertices
-			{
-				if (rootClusterSon->m_valueType != gmlStringValue) return false;
-				String vIDString = rootClusterSon->m_stringValue;
-
-				//we only allow a vertex id as string identification
-				if ((vIDString[0] != 'v') &&
-					(!isdigit(vIDString[0])))return false; //do not allow labels
-				//if old style entry "v"i
-				if (!isdigit(vIDString[0])) //should check prefix?
-					vIDString[0] = '0'; //leading zero to allow conversion
-				int vID = atoi(vIDString.cstr());
-
-				OGDF_ASSERT(m_mapToNode[vID] != 0)
-
-					//we assume that no node is already assigned
-					//CG.reassignNode(mapToNode[vID], CG.rootCluster());
-					//changed: all nodes are already assigned to root
-					//this code seems to be obsolete, todo: check
-					CG.reassignNode(m_mapToNode[vID], CG.rootCluster());
-				//char* vIDChar = new char[vIDString.length()+1];
-				//for (int ind = 1; ind < vIDString.length(); ind++)
-				//	vIDChar
-
-			}//case vertex
-		}//switch
-	}//for all rootcluster sons
-
-	return true;
-
-}//attributedclusterread
-
-
-bool GmlParser::readClusterAttributes(
-	GmlObject* cGraphics,
-	cluster c,
-	ClusterGraphAttributes& ACG)
-{
-	String label;
-	String fill;  // the fill color attribute
-	String line;  // the line color attribute
-	double lineWidth = 1.0; //node line width
-	int    pattern = 1; //node brush pattern
-	int    stipple = 1; //line style pattern
-
-	// read all relevant attributes
-	GmlObject *graphicsObject = cGraphics->m_pFirstSon;
-	for(; graphicsObject; graphicsObject = graphicsObject->m_pBrother)
-	{
-		switch(id(graphicsObject))
-		{
-		case xPredefKey:
-			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
-			ACG.clusterXPos(c) = graphicsObject->m_doubleValue;
-			break;
-
-		case yPredefKey:
-			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
-			ACG.clusterYPos(c) = graphicsObject->m_doubleValue;
-			break;
-
-		case widthPredefKey:
-			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
-			ACG.clusterWidth(c) = graphicsObject->m_doubleValue;
-			break;
-
-		case heightPredefKey:
-			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
-			ACG.clusterHeight(c) = graphicsObject->m_doubleValue;
-			break;
-		case fillPredefKey:
-			if(graphicsObject->m_valueType != gmlStringValue) return false;
-			ACG.clusterFillColor(c) = graphicsObject->m_stringValue;
-			break;
-		case patternPredefKey:
-			if(graphicsObject->m_valueType != gmlIntValue) return false;
-			pattern = graphicsObject->m_intValue;
-			break;
-			//line style
-		case colorPredefKey: // line color
-			if(graphicsObject->m_valueType != gmlStringValue) return false;
-			ACG.clusterColor(c) = graphicsObject->m_stringValue;
-			break;
-
-		case stipplePredefKey:
-			if(graphicsObject->m_valueType != gmlIntValue) return false;
-			stipple = graphicsObject->m_intValue;
-			break;
-		case lineWidthPredefKey:
-			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
-			lineWidth =
-				graphicsObject->m_doubleValue;
-			break;
-			//TODO: backgroundcolor
-			//case stylePredefKey:
-			//case boderwidthPredefKey:
-		}//switch
-	}//for
-
-	//Hier eigentlich erst abfragen, ob clusterattributes setzbar in ACG,
-	//dann setzen
-	ACG.clusterLineStyle(c) = GraphAttributes::intToStyle(stipple); //defaulting 1
-	ACG.clusterLineWidth(c) = lineWidth;
-	ACG.clusterFillPattern(c) = GraphAttributes::intToPattern(pattern);
-
-	return true;
-}//readclusterattributes
-
-//recursively read cluster subtree information
-bool GmlParser::recursiveClusterRead(GmlObject* clusterObject,
-								ClusterGraph& CG,
-								cluster c)
-{
-
-	//for direct root cluster sons, this is checked twice...
-	if (clusterObject->m_valueType != gmlListBegin) return false;
-
-	GmlObject *clusterSon = clusterObject->m_pFirstSon;
-
-	for(; clusterSon; clusterSon = clusterSon->m_pBrother)
-	{
-		//we dont read the attributes, therefore look only for
-		//id and sons
-		switch(id(clusterSon))
-		{
-			case clusterPredefKey:
-				{
-					if (clusterSon->m_valueType != gmlListBegin) return false;
-
-					cluster cson = CG.newCluster(c);
-					//recursively read child cluster
-					recursiveClusterRead(clusterSon, CG, cson);
-				}
-				break;
-			case vertexPredefKey: //direct cluster vertex entries
-				{
-					if (clusterSon->m_valueType != gmlStringValue) return false;
-					String vIDString = clusterSon->m_stringValue;
-
-					//if old style entry "v"i
-					if ((vIDString[0] != 'v') &&
-						(!isdigit(vIDString[0])))return false; //do not allow labels
-					//if old style entry "v"i
-					if (!isdigit(vIDString[0])) //should check prefix?
-						vIDString[0] = '0'; //leading zero to allow conversion
-					int vID = atoi(vIDString.cstr());
-
-					OGDF_ASSERT(m_mapToNode[vID] != 0)
-
-					//we assume that no node is already assigned
-					//CG.reassignNode(mapToNode[vID], c);
-					//changed: all nodes are already assigned to root
-					CG.reassignNode(m_mapToNode[vID], c);
-					//char* vIDChar = new char[vIDString.length()+1];
-					//for (int ind = 1; ind < vIDString.length(); ind++)
-					//	vIDChar
-
-				}//case vertex
-		}//switch
-	}//for clustersons
-
-	return true;
-
-}//recursiveclusterread
-
-//recursively read cluster subtree information
-bool GmlParser::recursiveAttributedClusterRead(GmlObject* clusterObject,
-								ClusterGraph& CG,
-								ClusterGraphAttributes& ACG,
-								cluster c)
-{
-
-	//for direct root cluster sons, this is checked twice...
-	if (clusterObject->m_valueType != gmlListBegin) return false;
-
-	GmlObject *clusterSon = clusterObject->m_pFirstSon;
-
-	for(; clusterSon; clusterSon = clusterSon->m_pBrother)
-	{
-		//we dont read the attributes, therefore look only for
-		//id and sons
-		switch(id(clusterSon))
-		{
-			case clusterPredefKey:
-				{
-					if (clusterSon->m_valueType != gmlListBegin) return false;
-
-					cluster cson = CG.newCluster(c);
-					//recursively read child cluster
-					recursiveAttributedClusterRead(clusterSon, CG, ACG, cson);
-				}
-				break;
-			case labelPredefKey:
-				{
-					if (clusterSon->m_valueType != gmlStringValue) return false;
-					ACG.clusterLabel(c) = clusterSon->m_stringValue;
-				}
-				break;
-			case templatePredefKey:
-				{
-					if (clusterSon->m_valueType != gmlStringValue) return false;
-					ACG.templateCluster(c) = clusterSon->m_stringValue;
-					break;
-				}
-			case graphicsPredefKey: //read the info for cluster c
-				{
-					if (clusterSon->m_valueType != gmlListBegin) return false;
-
-					readClusterAttributes(clusterSon, c , ACG);
-				}//graphics
-				break;
-			case vertexPredefKey: //direct cluster vertex entries
-				{
-					if (clusterSon->m_valueType != gmlStringValue) return false;
-					String vIDString = clusterSon->m_stringValue;
-
-					if ((vIDString[0] != 'v') &&
-						(!isdigit(vIDString[0])))return false; //do not allow labels
-					//if old style entry "v"i
-					if (!isdigit(vIDString[0])) //should check prefix?
-						vIDString[0] = '0'; //leading zero to allow conversion
-					int vID = atoi(vIDString.cstr());
-
-					OGDF_ASSERT(m_mapToNode[vID] != 0)
-
-					//we assume that no node is already assigned
-					//changed: all nodes are already assigned to root
-					CG.reassignNode(m_mapToNode[vID], c);
-
-				}//case vertex
-		}//switch
-	}//for clustersons
-
-	return true;
-}//recursiveAttributedClusterRead
+// //to be called AFTER calling read(G, AG)
+// bool GmlParser::readAttributedCluster(
+//     Graph &/*G*/,
+// 	ClusterGraph& CG,
+// 	ClusterGraphAttributes& ACG)
+// {
+// //	OGDF_ASSERT(&CG.getGraph() == &G)
+
+
+// 	//now we need the cluster object
+// 	GmlObject *rootObject = m_objectTree;
+// 	for(; rootObject; rootObject = rootObject->m_pBrother)
+// 		if (id(rootObject) == rootClusterPredefKey) break;
+
+// 	if(rootObject == 0)
+// 		return true;
+
+// 	if (id(rootObject) != rootClusterPredefKey)
+// 	{
+// 		setError("missing rootcluster key");
+// 		return false;
+// 	}
+
+// 	if (rootObject->m_valueType != gmlListBegin) return false;
+
+// 	attributedClusterRead(rootObject, CG, ACG);
+
+// 	return true;
+// }//readAttributedCluster
+
+
+// //the clustergraph has to be initialized on G!!,
+// //no clusters other then root cluster may exist, which holds all nodes
+// bool GmlParser::readCluster(Graph &/*G*/, ClusterGraph& CG)
+// {
+// //	OGDF_ASSERT(&CG.getGraph() == &G)
+
+// 	//now we need the cluster object
+// 	GmlObject *rootObject = m_objectTree;
+// 	for(; rootObject; rootObject = rootObject->m_pBrother)
+// 		if (id(rootObject) == rootClusterPredefKey) break;
+
+// 	//we have to check if the file does really contain clusters
+// 	//otherwise, rootcluster will suffice
+// 	if (rootObject == 0) return true;
+// 	if (id(rootObject) != rootClusterPredefKey)
+// 	{
+// 		setError("missing rootcluster key");
+// 		return false;
+// 	}
+
+// 	if (rootObject->m_valueType != gmlListBegin) return false;
+
+// 	clusterRead(rootObject, CG);
+
+// 	return true;
+// }//read clustergraph
+
+
+// //read all cluster tree information
+// bool GmlParser::clusterRead(
+// 	GmlObject* rootCluster,
+// 	ClusterGraph& CG)
+// {
+
+// 	//the root cluster is only allowed to hold child clusters and
+// 	//nodes in a list
+
+// 	if (rootCluster->m_valueType != gmlListBegin) return false;
+
+// 	// read all clusters and nodes
+// 	GmlObject *rootClusterSon = rootCluster->m_pFirstSon;
+
+// 	for(; rootClusterSon; rootClusterSon = rootClusterSon->m_pBrother)
+// 	{
+// 		switch(id(rootClusterSon))
+// 		{
+// 		case clusterPredefKey:
+// 			{
+// 				//we could delete this, but we aviod the call
+// 				if (rootClusterSon->m_valueType != gmlListBegin) return false;
+// 				// set attributes to default values
+// 				//we currently do not set any values
+// 				cluster c = CG.newCluster(CG.rootCluster());
+
+// 				//recursively read cluster
+// 				recursiveClusterRead(rootClusterSon, CG, c);
+
+// 			} //case cluster
+// 			break;
+// 		case vertexPredefKey: //direct root vertices
+// 			{
+// 				if (rootClusterSon->m_valueType != gmlStringValue) return false;
+// 				String vIDString = rootClusterSon->m_stringValue;
+
+// 				//we only allow a vertex id as string identification
+// 				if ((vIDString[0] != 'v') &&
+// 					(!isdigit(vIDString[0])))return false; //do not allow labels
+// 				//if old style entry "v"i
+// 				if (!isdigit(vIDString[0])) //should check prefix?
+// 					vIDString[0] = '0'; //leading zero to allow conversion
+// 				int vID = atoi(vIDString.cstr());
+
+// 				OGDF_ASSERT(m_mapToNode[vID] != 0)
+
+// 					//we assume that no node is already assigned ! Changed:
+// 					//all new nodes are assigned to root
+// 					//CG.reassignNode(mapToNode[vID], CG.rootCluster());
+// 					//it seems that this may be unnessecary, TODO check
+// 					CG.reassignNode(m_mapToNode[vID], CG.rootCluster());
+// 				//char* vIDChar = new char[vIDString.length()+1];
+// 				//for (int ind = 1; ind < vIDString.length(); ind++)
+// 				//	vIDChar
+
+// 			}//case vertex
+// 		}//switch
+// 	}//for all rootcluster sons
+
+// 	return true;
+
+// }//clusterread
+
+
+// //the same for attributed graphs
+// //read all cluster tree information
+// //make changes to this as well as the recursive function
+// bool GmlParser::attributedClusterRead(
+// 	GmlObject* rootCluster,
+// 	ClusterGraph& CG,
+// 	ClusterGraphAttributes& ACG)
+// {
+
+// 	//the root cluster is only allowed to hold child clusters and
+// 	//nodes in a list
+
+// 	if (rootCluster->m_valueType != gmlListBegin) return false;
+
+// 	// read all clusters and nodes
+// 	GmlObject *rootClusterSon = rootCluster->m_pFirstSon;
+
+// 	for(; rootClusterSon; rootClusterSon = rootClusterSon->m_pBrother)
+// 	{
+// 		switch(id(rootClusterSon))
+// 		{
+// 		case clusterPredefKey:
+// 			{
+// 				//we could delete this, but we avoid the call
+// 				if (rootClusterSon->m_valueType != gmlListBegin) return false;
+// 				// set attributes to default values
+// 				//we currently do not set any values
+// 				cluster c = CG.newCluster(CG.rootCluster());
+
+// 				//recursively read cluster
+// 				recursiveAttributedClusterRead(rootClusterSon, CG, ACG, c);
+
+// 			} //case cluster
+// 			break;
+
+// 		case vertexPredefKey: //direct root vertices
+// 			{
+// 				if (rootClusterSon->m_valueType != gmlStringValue) return false;
+// 				String vIDString = rootClusterSon->m_stringValue;
+
+// 				//we only allow a vertex id as string identification
+// 				if ((vIDString[0] != 'v') &&
+// 					(!isdigit(vIDString[0])))return false; //do not allow labels
+// 				//if old style entry "v"i
+// 				if (!isdigit(vIDString[0])) //should check prefix?
+// 					vIDString[0] = '0'; //leading zero to allow conversion
+// 				int vID = atoi(vIDString.cstr());
+
+// 				OGDF_ASSERT(m_mapToNode[vID] != 0)
+
+// 					//we assume that no node is already assigned
+// 					//CG.reassignNode(mapToNode[vID], CG.rootCluster());
+// 					//changed: all nodes are already assigned to root
+// 					//this code seems to be obsolete, todo: check
+// 					CG.reassignNode(m_mapToNode[vID], CG.rootCluster());
+// 				//char* vIDChar = new char[vIDString.length()+1];
+// 				//for (int ind = 1; ind < vIDString.length(); ind++)
+// 				//	vIDChar
+
+// 			}//case vertex
+// 		}//switch
+// 	}//for all rootcluster sons
+
+// 	return true;
+
+// }//attributedclusterread
+
+
+// bool GmlParser::readClusterAttributes(
+// 	GmlObject* cGraphics,
+// 	cluster c,
+// 	ClusterGraphAttributes& ACG)
+// {
+// 	String label;
+// 	String fill;  // the fill color attribute
+// 	String line;  // the line color attribute
+// 	double lineWidth = 1.0; //node line width
+// 	int    pattern = 1; //node brush pattern
+// 	int    stipple = 1; //line style pattern
+
+// 	// read all relevant attributes
+// 	GmlObject *graphicsObject = cGraphics->m_pFirstSon;
+// 	for(; graphicsObject; graphicsObject = graphicsObject->m_pBrother)
+// 	{
+// 		switch(id(graphicsObject))
+// 		{
+// 		case xPredefKey:
+// 			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
+// 			ACG.clusterXPos(c) = graphicsObject->m_doubleValue;
+// 			break;
+
+// 		case yPredefKey:
+// 			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
+// 			ACG.clusterYPos(c) = graphicsObject->m_doubleValue;
+// 			break;
+
+// 		case widthPredefKey:
+// 			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
+// 			ACG.clusterWidth(c) = graphicsObject->m_doubleValue;
+// 			break;
+
+// 		case heightPredefKey:
+// 			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
+// 			ACG.clusterHeight(c) = graphicsObject->m_doubleValue;
+// 			break;
+// 		case fillPredefKey:
+// 			if(graphicsObject->m_valueType != gmlStringValue) return false;
+// 			ACG.clusterFillColor(c) = graphicsObject->m_stringValue;
+// 			break;
+// 		case patternPredefKey:
+// 			if(graphicsObject->m_valueType != gmlIntValue) return false;
+// 			pattern = graphicsObject->m_intValue;
+// 			break;
+// 			//line style
+// 		case colorPredefKey: // line color
+// 			if(graphicsObject->m_valueType != gmlStringValue) return false;
+// 			ACG.clusterColor(c) = graphicsObject->m_stringValue;
+// 			break;
+
+// 		case stipplePredefKey:
+// 			if(graphicsObject->m_valueType != gmlIntValue) return false;
+// 			stipple = graphicsObject->m_intValue;
+// 			break;
+// 		case lineWidthPredefKey:
+// 			if(graphicsObject->m_valueType != gmlDoubleValue) return false;
+// 			lineWidth =
+// 				graphicsObject->m_doubleValue;
+// 			break;
+// 			//TODO: backgroundcolor
+// 			//case stylePredefKey:
+// 			//case boderwidthPredefKey:
+// 		}//switch
+// 	}//for
+
+// 	//Hier eigentlich erst abfragen, ob clusterattributes setzbar in ACG,
+// 	//dann setzen
+// 	ACG.clusterLineStyle(c) = GraphAttributes::intToStyle(stipple); //defaulting 1
+// 	ACG.clusterLineWidth(c) = lineWidth;
+// 	ACG.clusterFillPattern(c) = GraphAttributes::intToPattern(pattern);
+
+// 	return true;
+// }//readclusterattributes
+
+// //recursively read cluster subtree information
+// bool GmlParser::recursiveClusterRead(GmlObject* clusterObject,
+// 								ClusterGraph& CG,
+// 								cluster c)
+// {
+
+// 	//for direct root cluster sons, this is checked twice...
+// 	if (clusterObject->m_valueType != gmlListBegin) return false;
+
+// 	GmlObject *clusterSon = clusterObject->m_pFirstSon;
+
+// 	for(; clusterSon; clusterSon = clusterSon->m_pBrother)
+// 	{
+// 		//we dont read the attributes, therefore look only for
+// 		//id and sons
+// 		switch(id(clusterSon))
+// 		{
+// 			case clusterPredefKey:
+// 				{
+// 					if (clusterSon->m_valueType != gmlListBegin) return false;
+
+// 					cluster cson = CG.newCluster(c);
+// 					//recursively read child cluster
+// 					recursiveClusterRead(clusterSon, CG, cson);
+// 				}
+// 				break;
+// 			case vertexPredefKey: //direct cluster vertex entries
+// 				{
+// 					if (clusterSon->m_valueType != gmlStringValue) return false;
+// 					String vIDString = clusterSon->m_stringValue;
+
+// 					//if old style entry "v"i
+// 					if ((vIDString[0] != 'v') &&
+// 						(!isdigit(vIDString[0])))return false; //do not allow labels
+// 					//if old style entry "v"i
+// 					if (!isdigit(vIDString[0])) //should check prefix?
+// 						vIDString[0] = '0'; //leading zero to allow conversion
+// 					int vID = atoi(vIDString.cstr());
+
+// 					OGDF_ASSERT(m_mapToNode[vID] != 0)
+
+// 					//we assume that no node is already assigned
+// 					//CG.reassignNode(mapToNode[vID], c);
+// 					//changed: all nodes are already assigned to root
+// 					CG.reassignNode(m_mapToNode[vID], c);
+// 					//char* vIDChar = new char[vIDString.length()+1];
+// 					//for (int ind = 1; ind < vIDString.length(); ind++)
+// 					//	vIDChar
+
+// 				}//case vertex
+// 		}//switch
+// 	}//for clustersons
+
+// 	return true;
+
+// }//recursiveclusterread
+
+// //recursively read cluster subtree information
+// bool GmlParser::recursiveAttributedClusterRead(GmlObject* clusterObject,
+// 								ClusterGraph& CG,
+// 								ClusterGraphAttributes& ACG,
+// 								cluster c)
+// {
+
+// 	//for direct root cluster sons, this is checked twice...
+// 	if (clusterObject->m_valueType != gmlListBegin) return false;
+
+// 	GmlObject *clusterSon = clusterObject->m_pFirstSon;
+
+// 	for(; clusterSon; clusterSon = clusterSon->m_pBrother)
+// 	{
+// 		//we dont read the attributes, therefore look only for
+// 		//id and sons
+// 		switch(id(clusterSon))
+// 		{
+// 			case clusterPredefKey:
+// 				{
+// 					if (clusterSon->m_valueType != gmlListBegin) return false;
+
+// 					cluster cson = CG.newCluster(c);
+// 					//recursively read child cluster
+// 					recursiveAttributedClusterRead(clusterSon, CG, ACG, cson);
+// 				}
+// 				break;
+// 			case labelPredefKey:
+// 				{
+// 					if (clusterSon->m_valueType != gmlStringValue) return false;
+// 					ACG.clusterLabel(c) = clusterSon->m_stringValue;
+// 				}
+// 				break;
+// 			case templatePredefKey:
+// 				{
+// 					if (clusterSon->m_valueType != gmlStringValue) return false;
+// 					ACG.templateCluster(c) = clusterSon->m_stringValue;
+// 					break;
+// 				}
+// 			case graphicsPredefKey: //read the info for cluster c
+// 				{
+// 					if (clusterSon->m_valueType != gmlListBegin) return false;
+
+// 					readClusterAttributes(clusterSon, c , ACG);
+// 				}//graphics
+// 				break;
+// 			case vertexPredefKey: //direct cluster vertex entries
+// 				{
+// 					if (clusterSon->m_valueType != gmlStringValue) return false;
+// 					String vIDString = clusterSon->m_stringValue;
+
+// 					if ((vIDString[0] != 'v') &&
+// 						(!isdigit(vIDString[0])))return false; //do not allow labels
+// 					//if old style entry "v"i
+// 					if (!isdigit(vIDString[0])) //should check prefix?
+// 						vIDString[0] = '0'; //leading zero to allow conversion
+// 					int vID = atoi(vIDString.cstr());
+
+// 					OGDF_ASSERT(m_mapToNode[vID] != 0)
+
+// 					//we assume that no node is already assigned
+// 					//changed: all nodes are already assigned to root
+// 					CG.reassignNode(m_mapToNode[vID], c);
+
+// 				}//case vertex
+// 		}//switch
+// 	}//for clustersons
+
+// 	return true;
+// }//recursiveAttributedClusterRead
 
 void GmlParser::readLineAttribute(GmlObject *object, DPolyline &dpl)
 {

@@ -74,23 +74,23 @@ namespace ogdf
 		call(GA, edgelength);
 	}
 
-	void FMMMLayout::call(ClusterGraphAttributes &GA)
-	{
-		const Graph &G = GA.constGraph();
-		// compute depth of cluster tree, also sets cluster depth values
-		const ClusterGraph &CG = GA.constClusterGraph();
-		int cdepth = CG.treeDepth();
-		EdgeArray<double> edgeLength(G);
-		// compute lca of end vertices for each edge
-		edge e;
-		forall_edges(e, G)
-		{
-			edgeLength[e] = cdepth - CG.clusterDepth(CG.commonCluster(e->source(), e->target())) + 1;
-			OGDF_ASSERT(edgeLength[e] > 0)
-		}
-		call(GA, edgeLength);
-		GA.updateClusterPositions();
-	}
+	// void FMMMLayout::call(ClusterGraphAttributes &GA)
+	// {
+	// 	const Graph &G = GA.constGraph();
+	// 	// compute depth of cluster tree, also sets cluster depth values
+	// 	const ClusterGraph &CG = GA.constClusterGraph();
+	// 	int cdepth = CG.treeDepth();
+	// 	EdgeArray<double> edgeLength(G);
+	// 	// compute lca of end vertices for each edge
+	// 	edge e;
+	// 	forall_edges(e, G)
+	// 	{
+	// 		edgeLength[e] = cdepth - CG.clusterDepth(CG.commonCluster(e->source(), e->target())) + 1;
+	// 		OGDF_ASSERT(edgeLength[e] > 0)
+	// 	}
+	// 	call(GA, edgeLength);
+	// 	GA.updateClusterPositions();
+	// }
 
 	void FMMMLayout::call(GraphAttributes &GA, const EdgeArray<double> &edgeLength)
 	{

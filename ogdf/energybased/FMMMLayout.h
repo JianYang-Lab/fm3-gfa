@@ -52,7 +52,7 @@
 #define OGDF_FMMMLAYOUT_H
 
 #include "../basic/Graph.h"
-#include "../cluster/ClusterGraphAttributes.h"
+// #include "../cluster/ClusterGraphAttributes.h"
 #include "../module/LayoutModule.h"
 #include "../basic/geometry.h"
 #include "../internal/energybased/FruchtermanReingold.h"
@@ -376,7 +376,7 @@ public:
 	//! Models cluster by simple edge length adaption based on least common ancestor
 	//! cluster of end vertices.
     using LayoutModule::call;
-	void call(ClusterGraphAttributes &GA);
+	// void call(ClusterGraphAttributes &GA);
 
 	//! Extended algorithm call: Allows to pass desired lengths of the edges.
 	/**
