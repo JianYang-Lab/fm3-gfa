@@ -2,6 +2,10 @@
 name = "fm3-gfa"
 version = "0.1.0"
 edition = "2021"
+authors = [
+    "Wenjie Wei <weiwenjie@westlake.edu.cn>",
+    "Yifei Wang <wangyifei05@westlake.edu.cn>",
+]
 
 [dependencies]
 anyhow = "1.0.95"
