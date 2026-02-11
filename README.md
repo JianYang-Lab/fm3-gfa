@@ -9,8 +9,7 @@ This is very practical and efficient for displaying variation or website present
 ### DEMO
 ![demo](./demo.jpeg)
 
-### Live demo
-[1KCP](https://yanglab.westlake.edu.cn/1kcp/dataview/chr10-18041612-Multiallelic-SV-%3E170356588%3E170356673-1-SV?q=chr10-18041612-Multiallelic-SV-%3E170356588%3E170356673-1-SV&current=1)
+
 
 ### Installation
 
