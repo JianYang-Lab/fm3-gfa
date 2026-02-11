@@ -2,93 +2,250 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Network Graph</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>FM3 GFA Visualizer</title>
         <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
         <style>
+            :root {
+                --bg-0: #0a1021;
+                --bg-1: #111b36;
+                --panel: rgba(15, 23, 42, 0.72);
+                --panel-border: rgba(148, 163, 184, 0.26);
+                --text-main: #e2e8f0;
+                --text-muted: #9ca3af;
+                --accent: #22d3ee;
+                --accent-2: #fb7185;
+                --ok: #34d399;
+                --shadow: 0 16px 48px rgba(2, 8, 23, 0.45);
+            }
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
 
+            body {
+                min-height: 100vh;
+                color: var(--text-main);
+                font-family:
+                    "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica,
+                    sans-serif;
+                background:
+                    radial-gradient(
+                        circle at 10% 20%,
+                        rgba(34, 211, 238, 0.16),
+                        transparent 40%
+                    ),
+                    radial-gradient(
+                        circle at 80% 10%,
+                        rgba(251, 113, 133, 0.14),
+                        transparent 36%
+                    ),
+                    linear-gradient(150deg, var(--bg-0), var(--bg-1));
+            }
+
             .container {
                 display: flex;
                 height: 100vh;
+                gap: 20px;
+                padding: 20px;
             }
 
             .sidebar {
-                width: 250px;
-                padding: 20px;
-                border-right: 1px solid #ccc;
-                background: #f5f5f5;
+                width: 320px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 18px;
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                background: var(--panel);
+                backdrop-filter: blur(8px);
+                box-shadow: var(--shadow);
+                overflow: hidden;
+            }
+
+            .brand {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+            }
+
+            .brand h3 {
+                margin: 0;
+                font-size: 16px;
+                letter-spacing: 0.5px;
+                color: #f8fafc;
+            }
+
+            .badge {
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 600;
+                color: #0f172a;
+                background: linear-gradient(
+                    120deg,
+                    var(--accent),
+                    rgba(52, 211, 153, 0.95)
+                );
+            }
+
+            .search {
+                width: 100%;
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: 1px solid rgba(148, 163, 184, 0.35);
+                background: rgba(15, 23, 42, 0.85);
+                color: var(--text-main);
+                outline: none;
+                transition: border-color 0.2s ease;
+            }
+
+            .search::placeholder {
+                color: #7f8ea3;
+            }
+
+            .search:focus {
+                border-color: var(--accent);
             }
 
             .variant-list {
                 width: 100%;
-                height: calc(100vh - 100px);
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
+                flex: 1;
+                border: 1px solid rgba(148, 163, 184, 0.35);
+                border-radius: 12px;
+                padding: 6px;
+                background: rgba(15, 23, 42, 0.82);
+                color: var(--text-main);
+                line-height: 1.4;
+            }
+
+            .variant-list option {
+                border-radius: 8px;
+                padding: 6px 8px;
+                margin-bottom: 2px;
+            }
+
+            .variant-list option:checked {
+                background: rgba(34, 211, 238, 0.22);
+                color: #f8fafc;
+            }
+
+            .meta {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .meta-item {
+                border-radius: 10px;
+                border: 1px solid rgba(148, 163, 184, 0.25);
+                background: rgba(15, 23, 42, 0.78);
+                padding: 10px;
+            }
+
+            .meta-item span {
+                display: block;
+                color: var(--text-muted);
+                font-size: 12px;
+                margin-bottom: 4px;
+            }
+
+            .meta-item strong {
+                font-size: 16px;
+                color: #f8fafc;
+            }
+
+            .workspace {
+                position: relative;
+                flex: 1;
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                background: var(--panel);
+                backdrop-filter: blur(8px);
+                box-shadow: var(--shadow);
+                overflow: hidden;
+                min-width: 0;
+            }
+
+            .workspace-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding: 14px 18px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+                background: rgba(15, 23, 42, 0.62);
+            }
+
+            .workspace-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: #f8fafc;
+            }
+
+            .workspace-subtitle {
+                margin-left: 8px;
+                color: var(--text-muted);
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .workspace-actions {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .btn {
+                border: 1px solid rgba(148, 163, 184, 0.4);
+                border-radius: 10px;
+                background: rgba(15, 23, 42, 0.8);
+                color: var(--text-main);
+                font-size: 12px;
+                font-weight: 600;
+                padding: 8px 10px;
+                cursor: pointer;
+                transition:
+                    border-color 0.2s ease,
+                    transform 0.2s ease;
+            }
+
+            .btn:hover {
+                border-color: var(--accent);
+                transform: translateY(-1px);
+            }
+
+            .switch {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: var(--text-muted);
+                font-size: 12px;
+            }
+
+            .switch input {
+                accent-color: var(--accent);
             }
 
             .chart {
-                flex-grow: 1;
-                height: 100vh;
+                width: 100%;
+                height: calc(100vh - 160px);
             }
 
-            h3 {
-                margin-bottom: 16px;
-                color: #333;
-            }
-
-            .loading {
-                position: absolute;
-                top: 50%;
-                left: 60%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.9);
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                display: none;
-            }
-
-            .loading-spinner {
-                display: inline-block;
-                width: 30px;
-                height: 30px;
-                border: 3px solid #f3f3f3;
-                border-top: 3px solid #3498db;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-right: 10px;
-                vertical-align: middle;
-            }
-
-            @keyframes spin {
-                0% {
-                    transform: rotate(0deg);
-                }
-                100% {
-                    transform: rotate(360deg);
-                }
-            }
-
-            .loading-text {
-                display: inline-block;
-                vertical-align: middle;
-                font-size: 16px;
-                color: #333;
-            }
             .controls {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 14px;
+                padding: 12px 18px;
+                border-top: 1px solid rgba(148, 163, 184, 0.2);
+                background: rgba(15, 23, 42, 0.62);
             }
 
             .control-group {
@@ -98,75 +255,205 @@
             }
 
             .slider-label {
-                font-size: 14px;
-                color: #333;
-                min-width: 120px;
+                color: var(--text-muted);
+                font-size: 12px;
+                min-width: 74px;
             }
 
             .slider {
-                width: 150px;
-                height: 5px;
+                width: 180px;
+                height: 4px;
                 -webkit-appearance: none;
-                background: #ddd;
-                border-radius: 5px;
+                background: rgba(148, 163, 184, 0.38);
+                border-radius: 999px;
                 outline: none;
             }
 
             .slider::-webkit-slider-thumb {
                 -webkit-appearance: none;
                 appearance: none;
-                width: 15px;
-                height: 15px;
-                background: #3e54ac;
+                width: 16px;
+                height: 16px;
+                background: var(--accent);
                 border-radius: 50%;
+                border: 2px solid #0f172a;
                 cursor: pointer;
             }
 
             .slider::-moz-range-thumb {
-                width: 15px;
-                height: 15px;
-                background: #3e54ac;
+                width: 16px;
+                height: 16px;
+                background: var(--accent);
                 border-radius: 50%;
+                border: 2px solid #0f172a;
                 cursor: pointer;
-                border: none;
             }
 
             .value-display {
-                min-width: 40px;
+                min-width: 28px;
                 text-align: right;
+                color: #f8fafc;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .status {
+                color: var(--text-muted);
+                font-size: 12px;
+            }
+
+            .loading {
+                position: absolute;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(2, 6, 23, 0.56);
+                z-index: 20;
+            }
+
+            .loading-card {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 16px;
+                border-radius: 12px;
+                border: 1px solid rgba(148, 163, 184, 0.35);
+                background: rgba(15, 23, 42, 0.88);
+                box-shadow: var(--shadow);
+            }
+
+            .loading-spinner {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                border: 2px solid rgba(148, 163, 184, 0.35);
+                border-top-color: var(--accent);
+                animation: spin 0.9s linear infinite;
+            }
+
+            .loading-text {
+                color: #f8fafc;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .empty {
+                position: absolute;
+                inset: 74px 0 58px 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+                color: var(--text-muted);
                 font-size: 14px;
-                color: #666;
+                letter-spacing: 0.2px;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @media (max-width: 980px) {
+                .container {
+                    flex-direction: column;
+                    height: auto;
+                    min-height: 100vh;
+                }
+
+                .sidebar {
+                    width: 100%;
+                    max-height: 340px;
+                }
+
+                .workspace {
+                    min-height: 560px;
+                }
+
+                .chart {
+                    height: 420px;
+                }
             }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="sidebar">
-                <h3>Variants</h3>
-                <select
-                    id="variantSelect"
-                    class="variant-list"
-                    size="30"
-                ></select>
+                <div class="brand">
+                    <h3>FM3 Graph Browser</h3>
+                    <span class="badge">LIVE</span>
+                </div>
+                <input
+                    id="variantSearch"
+                    class="search"
+                    placeholder="Search variant id..."
+                    autocomplete="off"
+                />
+                <select id="variantSelect" class="variant-list" size="20"></select>
+                <div class="meta">
+                    <div class="meta-item">
+                        <span>Variants</span>
+                        <strong id="variantCount">0</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Selected</span>
+                        <strong id="selectedVariant">-</strong>
+                    </div>
+                </div>
             </div>
-            <div id="chart" class="chart"></div>
-            <div id="loading" class="loading">
-                <div class="loading-spinner"></div>
-                <span class="loading-text">Loading graph...</span>
-            </div>
-            <div class="controls">
-                <div class="control-group">
-                    <span class="slider-label">Node Size:</span>
-                    <input
-                        type="range"
-                        id="nodeSize"
-                        class="slider"
-                        min="1"
-                        max="20"
-                        value="5"
-                        step="1"
-                    />
-                    <span id="nodeSizeValue" class="value-display">5</span>
+            <div class="workspace">
+                <div class="workspace-header">
+                    <div>
+                        <span class="workspace-title">Variant Topology</span>
+                        <span class="workspace-subtitle"
+                            >Pan, zoom, drag to inspect local structure</span
+                        >
+                    </div>
+                    <div class="workspace-actions">
+                        <label class="switch">
+                            <input type="checkbox" id="toggleLabel" />
+                            Show labels
+                        </label>
+                        <button id="resetView" class="btn" type="button">
+                            Reset View
+                        </button>
+                    </div>
+                </div>
+
+                <div id="chart" class="chart"></div>
+                <div id="emptyState" class="empty">
+                    Select a variant from the left panel to start visualization
+                </div>
+
+                <div id="loading" class="loading">
+                    <div class="loading-card">
+                        <div class="loading-spinner"></div>
+                        <span class="loading-text">Computing graph layout...</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <span class="slider-label">Node Size</span>
+                        <input
+                            type="range"
+                            id="nodeSize"
+                            class="slider"
+                            min="2"
+                            max="24"
+                            value="8"
+                            step="1"
+                        />
+                        <span id="nodeSizeValue" class="value-display">8</span>
+                    </div>
+                    <div id="statusText" class="status">
+                        Ready. Waiting for variant selection.
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,18 +461,84 @@
         <script>
             const chart = echarts.init(document.getElementById("chart"));
             const select = document.getElementById("variantSelect");
+            const searchInput = document.getElementById("variantSearch");
             const loading = document.getElementById("loading");
+            const emptyState = document.getElementById("emptyState");
             const nodeSize = document.getElementById("nodeSize");
             const nodeSizeValue = document.getElementById("nodeSizeValue");
+            const resetViewBtn = document.getElementById("resetView");
+            const toggleLabel = document.getElementById("toggleLabel");
+            const statusText = document.getElementById("statusText");
+            const variantCount = document.getElementById("variantCount");
+            const selectedVariant = document.getElementById("selectedVariant");
 
             let currentOption = null;
+            let allVariants = [];
+            let currentData = null;
+            let currentVariant = "";
+
+            const categories = [
+                {
+                    name: "REF",
+                    itemStyle: {
+                        color: "#22d3ee",
+                    },
+                },
+                {
+                    name: "ALT",
+                    itemStyle: {
+                        color: "#fb7185",
+                    },
+                },
+            ];
+
+            function setStatus(text) {
+                statusText.textContent = text;
+            }
+
+            function renderVariantList(list) {
+                select.innerHTML = "";
+                list.forEach((variant) => {
+                    const option = document.createElement("option");
+                    option.value = variant;
+                    option.text = variant;
+                    select.appendChild(option);
+                });
+                variantCount.textContent = list.length.toString();
+            }
+
+            function filterVariants(keyword) {
+                const term = keyword.trim().toLowerCase();
+                const filtered = term
+                    ? allVariants.filter((id) => id.toLowerCase().includes(term))
+                    : allVariants;
+                renderVariantList(filtered);
+            }
 
             function updateChart(data) {
+                const size = Number(nodeSize.value);
+                const showLabel = toggleLabel.checked;
+                const nodeCount = data.nodes.length;
+                const edgeCount = data.links.length;
+
                 currentOption = {
                     title: {
-                        text: `Variant: ${select.value}`,
+                        text: `Variant: ${currentVariant}`,
+                        left: 16,
+                        top: 10,
+                        textStyle: {
+                            color: "#e2e8f0",
+                            fontSize: 16,
+                            fontWeight: 600,
+                        },
                     },
                     tooltip: {
+                        backgroundColor: "rgba(15,23,42,0.92)",
+                        borderColor: "rgba(148,163,184,0.34)",
+                        borderWidth: 1,
+                        textStyle: {
+                            color: "#e2e8f0",
+                        },
                         formatter: function (params) {
                             if (params.dataType === "node") {
                                 return `ID: ${params.data.name}<br/>
@@ -198,8 +551,13 @@
                     legend: {
                         data: categories.map((c) => c.name),
                         show: true,
+                        right: 20,
+                        top: 14,
+                        textStyle: {
+                            color: "#cbd5e1",
+                        },
                     },
-                    animationDurationUpdate: 1500,
+                    animationDurationUpdate: 900,
                     animationEasingUpdate: "quinticInOut",
                     series: [
                         {
@@ -220,25 +578,25 @@
                             roam: true,
                             draggable: true,
                             label: {
-                                show: false,
+                                show: showLabel,
+                                color: "#dbeafe",
+                                fontSize: 10,
                             },
-                            symbolSize: [
-                                Number(nodeSize.value),
-                                Number(nodeSize.value),
-                            ],
+                            symbolSize: [size, size],
                             lineStyle: {
-                                color: "#9DA2DE",
-                                width: 1,
-                                curveness: 0.1,
+                                color: "rgba(148, 163, 184, 0.62)",
+                                width: 1.2,
+                                curveness: 0.06,
                             },
                             emphasis: {
                                 focus: "adjacency",
                                 lineStyle: {
-                                    width: 3,
+                                    width: 2.5,
+                                    color: "#f8fafc",
                                 },
                             },
                             scaleLimit: {
-                                min: 0.1,
+                                min: 0.2,
                                 max: 10,
                             },
                         },
@@ -246,31 +604,20 @@
                 };
 
                 chart.setOption(currentOption);
+                setStatus(`Loaded ${nodeCount} nodes and ${edgeCount} edges.`);
+                selectedVariant.textContent = currentVariant;
+                emptyState.style.display = "none";
             }
-
-            const categories = [
-                {
-                    name: "REF",
-                    itemStyle: {
-                        color: "#3E54AC",
-                    },
-                },
-                {
-                    name: "ALT",
-                    itemStyle: {
-                        color: "#B01E68",
-                    },
-                },
-            ];
 
             // show and hide loading spinner
             function showLoading() {
-                loading.style.display = "block";
+                loading.style.display = "flex";
+                setStatus(`Loading ${currentVariant} ...`);
                 chart.showLoading({
                     text: "Loading...",
-                    color: "#3498db",
-                    textColor: "#333",
-                    maskColor: "rgba(255, 255, 255, 0.3)",
+                    color: "#22d3ee",
+                    textColor: "#e2e8f0",
+                    maskColor: "rgba(2, 6, 23, 0.24)",
                     zlevel: 0,
                 });
             }
@@ -284,31 +631,42 @@
             fetch("/api/variants")
                 .then((response) => response.json())
                 .then((variants) => {
-                    variants.forEach((variant) => {
-                        const option = document.createElement("option");
-                        option.value = variant;
-                        option.text = variant;
-                        select.appendChild(option);
-                    });
+                    allVariants = [...variants].sort((a, b) => a.localeCompare(b));
+                    renderVariantList(allVariants);
+                    setStatus(
+                        `Loaded ${allVariants.length} variants. Select one to visualize.`,
+                    );
+                })
+                .catch((error) => {
+                    console.error("Error loading variants:", error);
+                    setStatus("Failed to load variants list.");
                 });
 
             // watch select change
             select.addEventListener("change", (e) => {
                 const variantId = e.target.value;
+                currentVariant = variantId;
                 showLoading();
 
                 fetch(`/api/layout/${variantId}`)
                     .then((response) => response.json())
                     .then((data) => {
+                        currentData = data;
                         updateChart(data);
                     })
                     .catch((error) => {
                         console.error("Error loading layout:", error);
+                        setStatus("Failed to load graph. Try another variant.");
                         alert("Failed to load graph. Please try again.");
                     })
                     .finally(() => {
                         hideLoading();
                     });
+            });
+
+            // watch search input
+            searchInput.addEventListener("input", (e) => {
+                filterVariants(e.target.value);
             });
 
             // watch node size change
@@ -321,6 +679,22 @@
                     ];
                     chart.setOption(currentOption);
                 }
+            });
+
+            // watch label toggle
+            toggleLabel.addEventListener("change", () => {
+                if (currentOption) {
+                    currentOption.series[0].label.show = toggleLabel.checked;
+                    chart.setOption(currentOption);
+                }
+            });
+
+            // reset zoom/pan
+            resetViewBtn.addEventListener("click", () => {
+                if (!currentData || !currentVariant) {
+                    return;
+                }
+                updateChart(currentData);
             });
 
             // resize chart on window resize
