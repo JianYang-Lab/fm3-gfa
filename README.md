@@ -4,7 +4,7 @@
 
 ### Introduction
 
-Enter a GFA file, then specify a drunk😵‍💫 variant, it will locate it and achieve cool visualization.
+Enter a GFA file, then specify variants, it will locate it and achieve cool visualization.
 
 This is very practical and efficient for displaying variation or website presentation.
 
@@ -27,11 +27,6 @@ cargo build --release
 ./target/release/fm3-gfa generate --gfa test.gfa --vcf test.1000.vcf.gz > test.all.json.tsv
 ```
 
-test data for YangLab:
-
-```
-PATH TODO
-```
 
 #### 2. Start a web server
 
@@ -43,11 +38,9 @@ Server running at http://localhost:8888
 Enjoy the visualization at http://localhost:8888
 
 
-### Benchmark
-
-TODO!
 
 ### Maintainer
 
 Wenjie Wei: Developement
+
 Yifei Wang: Concept and test data
